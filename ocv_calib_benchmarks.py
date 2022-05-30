@@ -25,7 +25,7 @@ def detect_corners(image_list):
         image = cv.imread(path, 0)
         status, corners = cv.findChessboardCorners(image, (6, 8))
         if status:
-            criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 30, 0.1)
+            criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 300, 0.01)
             cv.cornerSubPix(image, corners, (5, 5), (-1, -1), criteria)
             corners_set.append(corners)
 
@@ -35,9 +35,9 @@ def detect_corners(image_list):
 def calibrate_pinhole(points3d, points2d, size):
     t1 = timer()
 
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 30, 0.1)
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 300, 0.1)
     rms, K, D, _, _ = cv.calibrateCamera(
-        points3d, points2d, size, None, None)
+        points3d, points2d, size, None, None, flags=cv.CALIB_RATIONAL_MODEL+cv.CALIB_TILTED_MODEL+cv.CALIB_THIN_PRISM_MODEL)
 
     return rms, K, D, timer() - t1
 
@@ -46,11 +46,11 @@ def calibrate_fisheye(points3d, points2d, size):
     t1 = timer()
 
     K = np.empty((3, 3))
-    D = np.empty((4))
+    D = np.empty(4)
 
-    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 30, 0.1)
+    criteria = (cv.TERM_CRITERIA_EPS + cv.TERM_CRITERIA_COUNT, 3000, 0.1)
     rms, K, D, _, _ = cv.fisheye.calibrate(
-        points3d, points2d, size, K, D, criteria=criteria)
+        points3d, points2d, size, K, D, criteria=criteria, flags=cv.fisheye.CALIB_CHECK_COND+cv.fisheye.CALIB_RECOMPUTE_EXTRINSIC)
 
     return rms, K, D, timer() - t1
 
